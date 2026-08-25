@@ -38,11 +38,23 @@ Not guessed — traced from the real binaries and a real `.mlt` project file gen
 
 | OS | `*-min` | `*-full` | Reduction |
 |---|---|---|---|
-| Linux | 189 MB | ~1010 MB | 5.3x |
-| Windows | 187.5 MB | ~562 MB | 3.0x |
-| macOS | 232.8 MB | ~551 MB | 2.4x |
+| Linux | ~190 MB | ~1010 MB | 5.3x |
+| Windows | ~191 MB | ~562 MB | 2.9x |
+| macOS | ~234 MB | ~551 MB | 2.4x |
+
+## Verificado con renders reales (2026-08-25)
+
+Las tres ramas `*-min` fueron probadas de verdad (no solo trazado estático de dependencias): un render real del `.mlt` completo del proyecto en Windows/Linux, y una prueba sintética idéntica en las tres plataformas (imagen + video combinados vía los 8 servicios trazados), con resultados prácticamente idénticos entre sí (mismo códec, mismo bitrate, tamaños de archivo dentro de 1-2 bytes de diferencia).
+
+Ese proceso encontró 3 problemas reales que el trazado estático de dependencias no detecta, porque no son dependencias de import de binario — corregidos en las tres ramas `*-min`:
+
+1. **`share/mlt*/`** — metadata de MLT (definiciones de perfiles como `dv_pal`, registro de módulos) que en un primer momento se trató como "solo documentación". Es requerida en tiempo de ejecución.
+2. **Plugin de plataforma Qt sin ventana** (`qoffscreen`) — hasta el uso headless de Qt (`QImage`, filtros de Qt) necesita inicializar `QGuiApplication`, lo que requiere un "platform plugin" presente.
+3. **`qt.conf`** — le dice a Qt dónde buscar sus plugins. En Windows/Linux, colocarlo junto al ejecutable resuelve el problema. **En macOS, colocarlo dentro de una estructura de bundle `.app` real rompe la firma digital original** (ver "Requirements" abajo) — la solución correcta ahí es ponerlo directo junto al binario `melt`, sin envolver nada en un bundle.
 
 ## Requirements
 
-- **Linux**: needs **glibc >= 2.35** (Ubuntu 22.04+, Debian 12+, Oracle/RHEL/Rocky/Alma **10**+ — NOT 9.x, which ships glibc 2.34 and stays there for its whole lifecycle).
+- **Linux**: needs **glibc >= 2.35** (Ubuntu 22.04+, Debian 12+, Oracle/RHEL/Rocky/Alma **10**+ — NOT 9.x, which ships glibc 2.34 and stays there for its whole lifecycle). Also needs a handful of small OS packages (X11/Wayland/ALSA/Mesa/fontconfig/cairo/VA-API client libs — NOT mlt/ffmpeg themselves) installed via `dnf`/`apt` in the deployment image — see `lnx-min`'s README for the exact package list.
 - All platforms: paths are relative to the original package layout (e.g. Linux's `melt-7` expects `../lib` and `../lib/mlt-7` next to it) — keep the folder structure intact, don't flatten it.
+- **Runtime env vars required** — see each `*-min` branch's own README for the exact variables (`QT_QPA_PLATFORM=offscreen` on all three; Linux additionally needs `MLT_REPOSITORY`/`MLT_DATA` set explicitly, since its `melt` binary has a hardcoded absolute build-time path baked in and won't auto-detect relative paths like Windows/macOS do).
+- **macOS specifically**: do **not** re-sign the `melt` binary (`codesign --sign -`) or wrap it in a new `.app` bundle structure — either breaks the trust chain Rosetta 2 needs to translate a downloaded x86_64 binary, producing "melt is damaged and can't be opened" even though the file itself is fine. Keep the original Meltytech-signed binary untouched; `qt.conf` next to it is enough.
