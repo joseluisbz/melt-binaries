@@ -34,3 +34,7 @@ libasound2t64 libx11-6 libdrm2 libgbm1 libwayland-egl1 libwayland-client0
 libwayland-cursor0 libx11-xcb1 libxcb1 libgpg-error0 libglx-mesa0 libegl1
 libgl1 libfontconfig1 libfreetype6 libva2 libcairo2
 ```
+
+## ffmpeg / ffprobe
+
+Incluidos en `bin/` (junto a `melt`/`melt-7`), copiados directamente de `lnx-full` (idéntico binario dinámico — enlaza contra las mismas libs de `lib/` ya presentes aquí). No los usa `melt` para renderizar, pero sí sirven para validar el `.mp4` resultante (duración/resolución reales vía `ffprobe`) antes de darlo por bueno. Nota: la raíz de `lnx-full` también trae un `ffmpeg`/`ffprobe` de ~770 bytes — son wrapper scripts, no binarios reales; los que importan son los de `bin/`.
