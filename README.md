@@ -22,3 +22,7 @@ export MLT_DATA="$(pwd)/Resources/mlt"
 ```
 
 **No re-firmar el binario** (`codesign --sign -`) — reemplaza la firma original de Apple/Meltytech por una ad-hoc, lo que rompe la confianza que Rosetta 2 necesita para traducir binarios Intel descargados de internet (produce "melt is damaged and can't be opened"). `qt.conf` ya está colocado junto a `melt` en `MacOS/`, que es donde Qt lo busca primero — evita que necesite consultar la estructura de bundle de macOS para nada.
+
+## ffmpeg / ffprobe
+
+Incluidos en `MacOS/` (junto a `melt`/`qt.conf`), copiados directamente de `mac-full` (idéntico binario — universal x86_64+arm64, a diferencia de `melt` que es x86_64-only vía Rosetta 2). No los usa `melt` para renderizar, pero sí sirven para validar el `.mp4` resultante (duración/resolución reales vía `ffprobe`) antes de darlo por bueno. Requieren el mismo `chmod +x`/`xattr -cr` de arriba.
