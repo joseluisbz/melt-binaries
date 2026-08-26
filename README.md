@@ -12,3 +12,7 @@ Solo una variable de entorno hace falta (Qt necesita un modo sin ventana para co
 ```powershell
 $env:QT_QPA_PLATFORM = "offscreen"
 ```
+
+## ffmpeg.exe / ffprobe.exe
+
+Incluidos en la raíz (mismo nivel que `melt.exe`), copiados directamente de `win-full` (idéntico binario). No son necesarios para renderizar — `melt` no los invoca — pero sí para validar el `.mp4` resultante (duración/resolución reales vía `ffprobe`) antes de darlo por bueno.
